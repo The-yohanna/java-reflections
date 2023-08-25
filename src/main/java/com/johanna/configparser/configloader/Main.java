@@ -1,0 +1,101 @@
+package com.johanna.configparser.configloader;
+
+import com.johanna.configparser.data.GameConfig;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Scanner;
+
+public class Main {
+    private static final String GAME_CONFIG_PATH = "game-properties.cfg";
+    private static final String UI_CONFIG_PATH = "user-interface.cfg";
+
+    public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, IOException {
+        ClassLoader classLoader = Main.class.getClassLoader();
+        GameConfig config = createConfigObject(
+                GameConfig.class,
+                new File(classLoader.getResource(GAME_CONFIG_PATH).getFile())
+                );
+        //UserInterfaceConfig config = createConfigObject(UserInterfaceConfig.class, UI_CONFIG_PATH);
+
+        System.out.println(config);
+    }
+
+    public static <T> T createConfigObject(Class<T> clazz, File file) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+
+        Scanner scanner = new Scanner(file);
+
+        Constructor<?> constructor = clazz.getDeclaredConstructor();
+        constructor.setAccessible(true);
+
+        T configInstance = (T) constructor.newInstance();
+
+        while (scanner.hasNextLine()) {
+            String configLine = scanner.nextLine();
+
+            String[] nameValuePair = configLine.split("=");
+
+            if (nameValuePair.length != 2) {
+                continue;
+            }
+
+            String propertyName = nameValuePair[0];
+            String propertyValue = nameValuePair[1];
+
+            Field field;
+            try {
+                field = clazz.getDeclaredField(propertyName);
+            } catch (NoSuchFieldException e) {
+                System.out.println(String.format("Property name : %s is unsupported", propertyName));
+                continue;
+            }
+
+            field.setAccessible(true);
+
+            Object parsedValue;
+
+            if (field.getType().isArray()) {
+                parsedValue = parseArray(field.getType().getComponentType(), propertyValue);
+            } else {
+                parsedValue = parseValue(field.getType(), propertyValue);
+            }
+
+
+            field.set(configInstance, parsedValue);
+        }
+
+        return configInstance;
+    }
+
+    private static Object parseArray(Class<?> elementType, String value) {
+        String[] elements = value.split(",");
+        Object arrayObject = Array.newInstance(elementType, elements.length);
+
+        for (int i = 0; i < elements.length; i++) {
+            Array.set(arrayObject, i, parseValue(elementType, elements[i]));
+        }
+
+        return arrayObject;
+    }
+
+    private static Object parseValue(Class<?> type, String value) {
+        if (type.equals(int.class)) {
+            return Integer.parseInt(value);
+        } else if (type.equals(short.class)) {
+            return Short.parseShort(value);
+        } else if (type.equals(long.class)) {
+            return Long.parseLong(value);
+        } else if (type.equals(double.class)) {
+            return Double.parseDouble(value);
+        } else if (type.equals(float.class)) {
+            return Float.parseFloat(value);
+        } else if (type.equals(String.class)) {
+            return value;
+        }
+        throw new RuntimeException(String.format("Type : %s unsupported", type.getTypeName()));
+    }
+}
