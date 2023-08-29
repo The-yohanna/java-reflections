@@ -1,4 +1,4 @@
-package com.johanna;
+package com.johanna.classes;
 
 import java.util.*;
 
@@ -14,7 +14,7 @@ public class Main {
 
         Class<?> hashMapClass = mapObject.getClass();
 
-        Class<?> squareClass = Class.forName("com.johanna.Main$Square");
+        Class<?> squareClass = Class.forName("com.johanna.tester.Main$Square");
 
         printClassInfo(stringClass, hashMapClass, squareClass);
 

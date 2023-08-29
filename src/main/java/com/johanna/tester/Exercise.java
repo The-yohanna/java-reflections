@@ -1,4 +1,4 @@
-package com.johanna;
+package com.johanna.tester;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -7,7 +7,7 @@ public class Main {
 
     public static void main(String[] args) throws URISyntaxException {
         ClassLoader classLoader = Main.class.getClassLoader();
-        URI packageUri = classLoader.getResource("tester").toURI();
+        URI packageUri = Main.class.getResource("classes").toURI();
         System.out.println(String.format("Package uri :%s", packageUri));
     }
 }
